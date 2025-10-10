@@ -10,9 +10,16 @@ from items.item import Item
 
 from rooms.scene_manager import SceneManager
 
+from ui.notifications import NotificationManager
+from ui.debug import DebugOverlay
+
 pygame.init()
 screen = pygame.display.set_mode((1300, 700))
 clock = pygame.time.Clock()
+notifier = NotificationManager(anchor="top-center")  # or "bottom-left"
+debug = DebugOverlay(anchor="top-left", font=pygame.font.Font(None, 18))
+
+debug.add_static("PrisonXD v0.1")
 running = True
 
 config = configparser.ConfigParser()
@@ -29,10 +36,48 @@ player.position = scene_mgr.current.spawn
 
 is_mouse_down = False
 
+# Providers (each called every frame)
+def perf_provider():
+    return {
+        "FPS": f"{clock.get_fps():.1f}",
+        "Frame": f"{clock.get_time()} ms",
+    }
+
+def player_provider():
+    px, py = player.position
+    return {
+        "Player": f"({px}, {py})",
+    }
+
+def scene_provider():
+    try:
+        cubes_count = len(scene_mgr.cubes())
+        return {
+            "Scene": scene_mgr.current.name,
+            "Blocks": cubes_count,
+        }
+    except NameError:
+        return {}
+    
+def mouse_hover_provider():
+    mx, my = pygame.mouse.get_pos()
+    mx = math.floor(mx / 50) * 50
+    my = math.floor(my / 50) * 50
+    return {
+        "Mouse": f"({mx}, {my})",
+    }
+
+debug.add_provider(perf_provider)
+debug.add_provider(player_provider)
+debug.add_provider(scene_provider)
+debug.add_provider(mouse_hover_provider)
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
             running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_F3:
+            debug.toggle()
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_e:
             player.toggle_inventory()
 
@@ -66,8 +111,6 @@ while running:
         mouse_x = math.floor(mouse_x / 50) * 50
         mouse_y = math.floor(mouse_y / 50) * 50
 
-        print(f"Mouse clicked at: ({mouse_x}, {mouse_y})")
-
         player_coordinates = player.position
         
         # Get mining distance from config
@@ -77,11 +120,11 @@ while running:
         for cube in scene_mgr.cubes().copy():
             if cube.rect.collidepoint(mouse_x, mouse_y):
                 if not (player_coordinates[0] in range(cube.rect.x - distance_x, cube.rect.x + cube.rect.width + distance_x) and player_coordinates[1] in range(cube.rect.y - distance_y, cube.rect.y + cube.rect.height + distance_y)):
-                    print(f"Too far away to mine! Player: {player_coordinates}, Block: ({cube.rect.x}, {cube.rect.y})")
+                    notifier.push("Too far away to mine!", "warning")
                     break
 
                 if cube.item.metadata.get("indestructable", False):
-                    print(f"Block at ({cube.rect.x}, {cube.rect.y}) is indestructable.")
+                    notifier.push("Block is indestructable", "warning")
                     break
                 print(f"Removing {cube.item.material.name} at: ({cube.rect.x}, {cube.rect.y})")
                 success, items = player.inventory.add_item(cube.get_drops())
@@ -92,6 +135,8 @@ while running:
 
     # draw scene
     scene_mgr.current.draw(screen)
+    notifier.draw(screen)
+    debug.draw(screen)
 
     pygame.display.flip()
 

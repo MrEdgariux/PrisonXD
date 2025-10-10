@@ -26,6 +26,11 @@ class SceneBase:
         # (Optional) visualize portals for debugging
         for r, *_ in self.portals: pygame.draw.rect(screen, (0,125,125), r, 2)
 
+        # A title at the top
+        font = pygame.font.SysFont(None, 36)
+        text = font.render(self.name.upper(), True, (255, 255, 255))
+        screen.blit(text, (screen.get_width()//2 - text.get_width()//2, 10))
+
     def update(self, player):
         """Return (next_scene_name, next_spawn) if a portal is touched, else (None, None)."""
         px, py = player.position
@@ -56,8 +61,9 @@ class HubScene(SceneBase):
 
         corridor_left = pygame.display.get_window_size()[0] - portal_width
 
-        corridor_rect = pygame.Rect(corridor_left, 0, portal_width, portal_height)  # "door" to the right
-        self.portals = [(corridor_rect, "mine", (50, 300))]
+        portal_mine_rect = pygame.Rect(corridor_left, 0, portal_width, portal_height)
+        portal_shop_rect = pygame.Rect(0, 0, portal_width, portal_height)
+        self.portals = [(portal_mine_rect, "mine", (50, 300)), (portal_shop_rect, "shop", (1100, 335))]
 
 
 class MineScene(SceneBase):
@@ -95,3 +101,22 @@ class MineScene(SceneBase):
         # portal back to hub at the far left
         back_rect = pygame.Rect(0, 0, portal_width, portal_height)
         self.portals = [(back_rect, "hub", (1100, 335))]
+
+class ShopScene(SceneBase):
+    def __init__(self):
+        super().__init__("shop", spawn=(100, 335))
+
+    def load(self):
+        self.cubes = []
+
+        cube_size = int(self.config.get('game.mines', 'block_size', fallback=50))
+        portal_width = int(self.config.get('game.portals', 'portal_width', fallback=50))
+        portal_height = int(self.config.get('game.portals', 'portal_height', fallback=700))
+
+        for x in range(0, 1300, 50):
+            item = Item(BEDROCK, 1, {"indestructable": True})
+            self.cubes.append(Block(x, 650, cube_size, cube_size, item))
+
+        corridor_left = pygame.display.get_window_size()[0] - portal_width
+        corridor_rect = pygame.Rect(corridor_left, 0, portal_width, portal_height)  # "door" to the right
+        self.portals = [(corridor_rect, "hub", (100, 335))]

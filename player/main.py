@@ -1,6 +1,7 @@
 from .inventory import PlayerInventory
 from pygame.locals import K_LEFT, K_RIGHT, K_UP, K_DOWN, K_a, K_d, K_w, K_s
 from configparser import ConfigParser
+import time, pygame
 
 class Player:
     def __init__(self, res, config: ConfigParser, settings: ConfigParser):
