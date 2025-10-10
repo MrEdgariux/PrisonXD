@@ -1,16 +1,18 @@
 from items.item import Item
+from configparser import ConfigParser
 
-class PlayerSlot:
-    def __init__(self, index):
+class PlayerSlot():
+    def __init__(self, index: int, slot_size: int = 64):
         self.index = index
         self.item: Item = None
+        self.slot_size = slot_size
 
     def is_empty(self):
         return self.item is None
     
     def is_full(self):
         if self.item:
-            return self.item.quantity >= 64
+            return self.item.quantity >= self.slot_size
         return False
     
     def add_item(self, item: Item):
@@ -18,7 +20,7 @@ class PlayerSlot:
             self.item = item
             return True, item
         elif self.item.material.id == item.material.id:
-            available_space = 64 - self.item.quantity
+            available_space = self.slot_size - self.item.quantity
             if available_space >= item.quantity:
                 self.item.quantity += item.quantity
                 return True, item
@@ -43,8 +45,8 @@ class PlayerSlot:
         return False, item
 
 class PlayerInventory:
-    def __init__(self):
-        self.slots = [PlayerSlot(i) for i in range(10)]
+    def __init__(self, slot_count: int = 10, slot_size: int = 64):
+        self.slots = [PlayerSlot(i, slot_size) for i in range(slot_count)]
 
     def add_item(self, item: Item):
         for slot in self.slots:

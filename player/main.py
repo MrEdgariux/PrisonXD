@@ -1,11 +1,14 @@
 from .inventory import PlayerInventory
 from pygame.locals import K_LEFT, K_RIGHT, K_UP, K_DOWN, K_a, K_d, K_w, K_s
+from configparser import ConfigParser
 
 class Player:
-    def __init__(self, res):
-        self.inventory = PlayerInventory()
+    def __init__(self, res, config: ConfigParser, settings: ConfigParser):
+        self.inventory = PlayerInventory(config.getint('game.inventory', 'slot_count', fallback=10), config.getint('game.inventory', 'slot_size', fallback=64))
         self.position = (100, 100)
         self.res = res
+        self.settings = settings
+        self.config = config
         self.inventory_open = False
         self._inventory_surface = None  # cached surface
 
