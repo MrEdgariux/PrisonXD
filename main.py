@@ -10,13 +10,15 @@ from classes.items.item import Item
 from classes.shop import ShopManager
 
 from rooms.scene_manager import SceneManager
+from rooms.scenes import ShopScene
 
 from ui.notifications import NotificationManager
 from ui.debug import DebugOverlay
 from ui.shop import ShopUI
 
-
 from init import GameInit
+
+from helper import *
 
 pygame.init()
 screen = pygame.display.set_mode((1300, 700))
@@ -25,7 +27,9 @@ clock = pygame.time.Clock()
 notifier = NotificationManager(anchor="top-center")  # or "bottom-left"
 debug = DebugOverlay(anchor="top-left", font=pygame.font.Font(None, 18))
 shop_manager = ShopManager()
-scene_mgr = SceneManager()
+shop_ui = ShopUI()
+GameInit(shop_manager)
+scene_mgr = SceneManager(shop_manager, shop_ui)
 
 config = configparser.ConfigParser()
 settings = configparser.ConfigParser()
@@ -36,7 +40,6 @@ settings.read('settings.ini')
 player = Player(screen.get_size(), config, settings)
 player.position = scene_mgr.current.spawn
 
-GameInit(shop_manager)
 
 debug.add_static("PrisonXD v0.1")
 running = True
@@ -86,6 +89,18 @@ while running:
             debug.toggle()
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_e:
             player.toggle_inventory()
+
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            mx, my = event.pos
+            # If shop UI is open, handle clicks there first
+            if shop_ui.visible:
+                action = shop_ui.handle_click((mx, my))
+                if action and scene_mgr.current and isinstance(scene_mgr.current, ShopScene):
+                    process_shop_action(player, scene_mgr.current.shop, action, notifier)
+                continue
+        elif event.type == pygame.MOUSEWHEEL:
+            if shop_ui.visible:
+                shop_ui.handle_scroll(-event.y)  # Invert to match typical scroll direction
 
     screen.fill((0, 155, 0))
 
@@ -143,6 +158,7 @@ while running:
     scene_mgr.current.draw(screen)
     notifier.draw(screen)
     debug.draw(screen)
+    shop_ui.draw(screen)
 
     pygame.display.flip()
 

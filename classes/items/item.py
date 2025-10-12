@@ -1,4 +1,4 @@
-from items.materials import Material
+from classes.items.materials import Material
 
 class Item:
     def __init__(self, material: Material, quantity: int, metadata:dict = {}):

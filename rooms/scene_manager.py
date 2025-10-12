@@ -1,13 +1,13 @@
 from rooms.scenes import HubScene, MineScene, ShopScene
 
 class SceneManager:
-    def __init__(self):
+    def __init__(self, shop_manager, shop_ui):
         self.scenes = {
             "hub": HubScene(),
             "mine": MineScene(),
-            "shop": ShopScene(),
+            "shop": ShopScene(shop_manager, shop_ui),
         }
-        self.current: HubScene | MineScene = self.scenes["hub"]
+        self.current: HubScene | MineScene = self.scenes["shop"]
         for s in self.scenes.values():
             s.load()
 

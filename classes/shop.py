@@ -1,5 +1,4 @@
 # shop.py
-import pygame
 from dataclasses import dataclass
 from typing import List, Dict
 

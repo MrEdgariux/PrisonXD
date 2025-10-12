@@ -1,4 +1,4 @@
-from .inventory import PlayerInventory
+from classes.player.inventory import PlayerInventory
 from pygame.locals import K_LEFT, K_RIGHT, K_UP, K_DOWN, K_a, K_d, K_w, K_s
 from configparser import ConfigParser
 import time, pygame
@@ -12,6 +12,9 @@ class Player:
         self.config = config
         self.inventory_open = False
         self._inventory_surface = None  # cached surface
+
+        self.money = 0
+        self.gems = 0
 
     def moveHandler(self, keys, obstacles=None):
         if keys[K_LEFT] or keys[K_a]:
@@ -76,4 +79,22 @@ class Player:
 
     def get_inventory_surface(self):
         return self._inventory_surface
+    
+    def add_money(self, amount):
+        self.money += amount
+
+    def add_gems(self, amount):
+        self.gems += amount
+
+    def take_money(self, amount):
+        if self.money >= amount:
+            self.money -= amount
+            return True
+        return False
+    
+    def take_gems(self, amount):
+        if self.gems >= amount:
+            self.gems -= amount
+            return True
+        return False
         

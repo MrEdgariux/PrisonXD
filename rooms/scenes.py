@@ -3,6 +3,8 @@ from mine import Block
 
 from classes.items.materials import *
 from classes.items.item import Item
+from classes.shop import *
+from ui.shop import ShopUI
 
 class SceneBase:
     def __init__(self, name, spawn=(100,100)):
@@ -103,8 +105,14 @@ class MineScene(SceneBase):
         self.portals = [(back_rect, "hub", (1100, 335))]
 
 class ShopScene(SceneBase):
-    def __init__(self):
+    def __init__(self, shop_manager: ShopManager, shop_ui: ShopUI):
         super().__init__("shop", spawn=(100, 335))
+
+        self.shop_manager: ShopManager = shop_manager
+        self.shop_ui: ShopUI = shop_ui
+
+        self.opened_shop: bool = False
+        self.shop_active: Shop | None = None
 
     def load(self):
         self.cubes = []
@@ -120,3 +128,36 @@ class ShopScene(SceneBase):
         corridor_left = pygame.display.get_window_size()[0] - portal_width
         corridor_rect = pygame.Rect(corridor_left, 0, portal_width, portal_height)  # "door" to the right
         self.portals = [(corridor_rect, "hub", (100, 335))]
+
+        self.shop = self.shop_manager.get("mine_sell_shop")  # ensure it's registered
+        if not self.shop:
+            raise ValueError("Shop 'mine_sell_shop' not found in ShopManager.")
+        
+    def update(self, player):
+        next_scene, next_spawn = super().update(player)
+        if next_scene:
+            if self.shop_ui.visible:
+                self.shop_ui.close()
+            self.opened_shop = False
+            self.shop_active = None
+            return next_scene, next_spawn
+
+        # If player is near the shop area (left side), open the shop UI
+        px, py = player.position
+        cube_size = int(self.config.get('game.mines', 'block_size', fallback=50))
+        player_rect = pygame.Rect(px, py, cube_size, cube_size)
+
+        shop_area = pygame.Rect(0, 0, 200, 700)
+        if player_rect.colliderect(shop_area):
+            if not self.opened_shop:
+                if self.shop:
+                    self.shop_ui.open(self.shop)
+                    self.shop_active = self.shop
+                self.opened_shop = True
+        else:
+            if self.opened_shop:
+                self.shop_ui.close()
+                self.shop_active = None
+                self.opened_shop = False
+
+        return None, None

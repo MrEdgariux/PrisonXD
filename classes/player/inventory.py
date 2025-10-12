@@ -1,4 +1,4 @@
-from items.item import Item
+from classes.items.item import Item
 from configparser import ConfigParser
 
 class PlayerSlot():
