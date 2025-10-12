@@ -1,5 +1,5 @@
 import pygame
-from items.item import Item
+from classes.items.item import Item
 
 class Block(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, item: Item):

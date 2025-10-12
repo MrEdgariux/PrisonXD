@@ -4,23 +4,28 @@ import random
 import configparser
 
 from mine import Block
-from player.main import Player
-from items.materials import Materials
-from items.item import Item
+from classes.player.main import Player
+from classes.items.materials import Materials
+from classes.items.item import Item
+from classes.shop import ShopManager
 
 from rooms.scene_manager import SceneManager
 
 from ui.notifications import NotificationManager
 from ui.debug import DebugOverlay
+from ui.shop import ShopUI
+
+
+from init import GameInit
 
 pygame.init()
 screen = pygame.display.set_mode((1300, 700))
 clock = pygame.time.Clock()
+
 notifier = NotificationManager(anchor="top-center")  # or "bottom-left"
 debug = DebugOverlay(anchor="top-left", font=pygame.font.Font(None, 18))
-
-debug.add_static("PrisonXD v0.1")
-running = True
+shop_manager = ShopManager()
+scene_mgr = SceneManager()
 
 config = configparser.ConfigParser()
 settings = configparser.ConfigParser()
@@ -29,11 +34,12 @@ config.read('config.ini')
 settings.read('settings.ini')
 
 player = Player(screen.get_size(), config, settings)
-cubes: list[Block] = []
-
-scene_mgr = SceneManager()
 player.position = scene_mgr.current.spawn
 
+GameInit(shop_manager)
+
+debug.add_static("PrisonXD v0.1")
+running = True
 is_mouse_down = False
 
 # Providers (each called every frame)

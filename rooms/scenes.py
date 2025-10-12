@@ -1,8 +1,8 @@
 import pygame, math, random, configparser
 from mine import Block
 
-from items.materials import *
-from items.item import Item
+from classes.items.materials import *
+from classes.items.item import Item
 
 class SceneBase:
     def __init__(self, name, spawn=(100,100)):
