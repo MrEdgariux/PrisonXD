@@ -1,60 +1,16 @@
-import pygame, math, random, configparser
+import pygame, random
 from mine import Block
 
 from classes.items.materials import *
 from classes.items.item import Item
 from classes.shop import *
-from classes.player.main import Player
 from ui.shop import ShopUI
-
-class SceneBase:
-    def __init__(self, name, spawn=(100,100)):
-        self.name = name
-        self.spawn = spawn
-        self.config = configparser.ConfigParser()
-        self.settings = configparser.ConfigParser()
-        self.cubes: list[Block] = []
-        self.portals = []  # list of (rect, target_scene_name, target_spawn)
-
-        self.config.read('config.ini')
-        self.settings.read('settings.ini')
-
-    def load(self):
-        """(Re)create blocks/portals for this scene."""
-        pass
-
-    def draw(self, screen, player: Player):
-        for cube in self.cubes:
-            screen.blit(cube.image, cube.rect)
-        # (Optional) visualize portals for debugging
-        for r, *_ in self.portals: pygame.draw.rect(screen, (0,125,125), r, 2)
-
-        # A title at the top
-        font = pygame.font.SysFont(None, 36)
-        text = font.render(self.name.upper().replace('_', ' '), True, (255, 255, 255))
-        screen.blit(text, (screen.get_width()//2 - text.get_width()//2, 10))
-
-        # Balance at the bottom right
-        font = pygame.font.SysFont(None, 24)
-        text = font.render(f"Balance: ${player.money}", True, (255, 255, 0))
-        screen.blit(text, (screen.get_width() - text.get_width() - 10, screen.get_height() - text.get_height() - 10))
-
-    def update(self, player):
-        """Return (next_scene_name, next_spawn) if a portal is touched, else (None, None)."""
-        px, py = player.position
-        cube_size = int(self.config.get('game.mines', 'block_size', fallback=50))
-        
-        player_rect = pygame.Rect(px, py, cube_size, cube_size)
-        for rect, target, target_spawn in self.portals:
-            if player_rect.colliderect(rect):
-                return target, target_spawn
-        return None, None
-
+from rooms.scenes import SceneBase
 
 class HubScene(SceneBase):
     def __init__(self):
         # spawn in middle-left, e.g.
-        super().__init__("hub", spawn=(100, 335))
+        super().__init__("c_hub", spawn=(100, 335))
 
     def load(self):
         self.cubes = []
@@ -71,12 +27,11 @@ class HubScene(SceneBase):
 
         portal_mine_rect = pygame.Rect(corridor_left, 0, portal_width, portal_height)
         portal_shop_rect = pygame.Rect(0, 0, portal_width, portal_height)
-        self.portals = [(portal_mine_rect, "c_mine", (50, 300)), (portal_shop_rect, "shop", (1100, 335))]
-
+        self.portals = [(portal_mine_rect, "c_mine", (50, 300)), (portal_shop_rect, "c_shop", (1100, 335))]
 
 class MineScene(SceneBase):
     def __init__(self):
-        super().__init__("mine", spawn=(50, 50))
+        super().__init__("c_mines", spawn=(50, 50))
 
     def load(self):
         self.cubes = []
@@ -108,11 +63,11 @@ class MineScene(SceneBase):
 
         # portal back to hub at the far left
         back_rect = pygame.Rect(0, 0, portal_width, portal_height)
-        self.portals = [(back_rect, "hub", (1100, 335))]
+        self.portals = [(back_rect, "c_hub", (1100, 335))]
 
 class ShopScene(SceneBase):
     def __init__(self, shop_manager: ShopManager, shop_ui: ShopUI):
-        super().__init__("shop", spawn=(100, 335))
+        super().__init__("c_shop", spawn=(100, 335))
 
         self.shop_manager: ShopManager = shop_manager
         self.shop_ui: ShopUI = shop_ui
@@ -133,7 +88,7 @@ class ShopScene(SceneBase):
 
         corridor_left = pygame.display.get_window_size()[0] - portal_width
         corridor_rect = pygame.Rect(corridor_left, 0, portal_width, portal_height)  # "door" to the right
-        self.portals = [(corridor_rect, "hub", (100, 335))]
+        self.portals = [(corridor_rect, "c_hub", (100, 335))]
 
         self.shop = self.shop_manager.get("mine_sell_shop")  # ensure it's registered
         if not self.shop:
