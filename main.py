@@ -8,6 +8,7 @@ from classes.player.main import Player
 from classes.items.materials import Materials
 from classes.items.item import Item
 from classes.shop import ShopManager
+from classes.player.ranks import RankManager, Rank
 
 from rooms.scene_manager import SceneManager
 from rooms.scenes import ShopScene
@@ -15,6 +16,7 @@ from rooms.scenes import ShopScene
 from ui.notifications import NotificationManager
 from ui.debug import DebugOverlay
 from ui.shop import ShopUI
+from ui.chat import ChatUI
 
 from init import GameInit
 
@@ -26,9 +28,11 @@ clock = pygame.time.Clock()
 
 notifier = NotificationManager(anchor="top-center")  # or "bottom-left"
 debug = DebugOverlay(anchor="top-left", font=pygame.font.Font(None, 18))
+chat = ChatUI(10, 400, 400, 290)
 shop_manager = ShopManager()
 shop_ui = ShopUI()
-GameInit(shop_manager)
+rank_manager = RankManager()
+GameInit(shop_manager, rank_manager)
 scene_mgr = SceneManager(shop_manager, shop_ui)
 
 config = configparser.ConfigParser()
@@ -37,9 +41,8 @@ settings = configparser.ConfigParser()
 config.read('config.ini')
 settings.read('settings.ini')
 
-player = Player(screen.get_size(), config, settings)
+player = Player(screen.get_size(), config, settings, rank_manager)
 player.position = scene_mgr.current.spawn
-
 
 debug.add_static("PrisonXD v0.1")
 running = True
@@ -76,20 +79,48 @@ def mouse_hover_provider():
         "Mouse": f"({mx}, {my})",
     }
 
+def rank_provider():
+    if player.rank:
+        return {
+            "Rank": f"{player.rank.display_name} (${player.rank.price})",
+        }
+    else:
+        return {
+            "Rank": "None",
+        }
+    
+def ranks_provider():
+    ranks = rank_manager.all()
+    if ranks:
+        return {
+            "Ranks": " > ".join([rank.display_name for rank in ranks])
+        }
+    else:
+        return {
+            "Ranks": "None"
+        }
+
 debug.add_provider(perf_provider)
 debug.add_provider(player_provider)
 debug.add_provider(scene_provider)
 debug.add_provider(mouse_hover_provider)
+debug.add_provider(rank_provider)
+debug.add_provider(ranks_provider)
 
 while running:
     for event in pygame.event.get():
-        if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+        if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE and not chat.is_chat_open):
             running = False
+        if chat.is_chat_open:
+            chat_message = chat.handle_event(event)
+            if chat_message:
+                chat.add_message("Player", chat_message, (255, 255, 255))
+                print(f"Chat message: {chat_message}")
+            continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_F3:
             debug.toggle()
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_e:
             player.toggle_inventory()
-
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mx, my = event.pos
             # If shop UI is open, handle clicks there first
@@ -101,6 +132,8 @@ while running:
         elif event.type == pygame.MOUSEWHEEL:
             if shop_ui.visible:
                 shop_ui.handle_scroll(-event.y)  # Invert to match typical scroll direction
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_t:
+            chat.toggle_chat()
 
     screen.fill((0, 155, 0))
 
@@ -122,7 +155,8 @@ while running:
         continue  # Skip movement and mining when inventory is open
 
     keys = pygame.key.get_pressed()
-    player.moveHandler(keys, scene_mgr.cubes())
+    if not chat.is_chat_open:
+        player.moveHandler(keys, scene_mgr.cubes())
 
     mouse_pressed = pygame.mouse.get_pressed()[0]
 
@@ -159,6 +193,8 @@ while running:
     notifier.draw(screen)
     debug.draw(screen)
     shop_ui.draw(screen)
+    chat.update(clock.get_time())
+    chat.draw(screen)
 
     pygame.display.flip()
 

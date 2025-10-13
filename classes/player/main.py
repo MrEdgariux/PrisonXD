@@ -1,10 +1,11 @@
 from classes.player.inventory import PlayerInventory
+from classes.player.ranks import RankManager, Rank
 from pygame.locals import K_LEFT, K_RIGHT, K_UP, K_DOWN, K_a, K_d, K_w, K_s
 from configparser import ConfigParser
 import time, pygame
 
 class Player:
-    def __init__(self, res, config: ConfigParser, settings: ConfigParser):
+    def __init__(self, res, config: ConfigParser, settings: ConfigParser, rank_manager: RankManager):
         self.inventory = PlayerInventory(config.getint('game.inventory', 'slot_count', fallback=10), config.getint('game.inventory', 'slot_size', fallback=64))
         self.position = (100, 100)
         self.res = res
@@ -15,6 +16,7 @@ class Player:
 
         self.money = 0
         self.gems = 0
+        self.rank: Rank = rank_manager.get("c") # Default rank
 
     def moveHandler(self, keys, obstacles=None):
         if keys[K_LEFT] or keys[K_a]:
