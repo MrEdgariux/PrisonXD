@@ -7,7 +7,7 @@ class SceneManager:
             "mine": MineScene(),
             "shop": ShopScene(shop_manager, shop_ui),
         }
-        self.current: HubScene | MineScene = self.scenes["shop"]
+        self.current: HubScene | MineScene = self.scenes["hub"]
         for s in self.scenes.values():
             s.load()
 

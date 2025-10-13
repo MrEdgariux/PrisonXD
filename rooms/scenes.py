@@ -4,6 +4,7 @@ from mine import Block
 from classes.items.materials import *
 from classes.items.item import Item
 from classes.shop import *
+from classes.player.main import Player
 from ui.shop import ShopUI
 
 class SceneBase:
@@ -22,7 +23,7 @@ class SceneBase:
         """(Re)create blocks/portals for this scene."""
         pass
 
-    def draw(self, screen):
+    def draw(self, screen, player: Player):
         for cube in self.cubes:
             screen.blit(cube.image, cube.rect)
         # (Optional) visualize portals for debugging
@@ -32,6 +33,11 @@ class SceneBase:
         font = pygame.font.SysFont(None, 36)
         text = font.render(self.name.upper(), True, (255, 255, 255))
         screen.blit(text, (screen.get_width()//2 - text.get_width()//2, 10))
+
+        # Balance at the bottom right
+        font = pygame.font.SysFont(None, 24)
+        text = font.render(f"Balance: ${player.money}", True, (255, 255, 0))
+        screen.blit(text, (screen.get_width() - text.get_width() - 10, screen.get_height() - text.get_height() - 10))
 
     def update(self, player):
         """Return (next_scene_name, next_spawn) if a portal is touched, else (None, None)."""

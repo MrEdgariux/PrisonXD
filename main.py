@@ -112,7 +112,7 @@ while running:
         scene_mgr.switch(next_scene, player, next_spawn)
 
     if player.inventory_open:
-        scene_mgr.current.draw(screen)
+        scene_mgr.current.draw(screen, player)
         inv_surf = player.get_inventory_surface()
         if inv_surf:
             screen.blit(inv_surf, (440, 210))
@@ -155,7 +155,7 @@ while running:
     is_mouse_down = mouse_pressed
 
     # draw scene
-    scene_mgr.current.draw(screen)
+    scene_mgr.current.draw(screen, player)
     notifier.draw(screen)
     debug.draw(screen)
     shop_ui.draw(screen)
