@@ -39,5 +39,3 @@ def GameInit(shop_manager: ShopManager, rank_manager: RankManager, reg: CommandR
     reg.register("tp",    cmd_tp,   aliases=["teleport"])
     reg.register("scene", cmd_scene)
     reg.register("shop",  cmd_shop)
-    reg.register("inv",   cmd_inv,  aliases=["inventory"])
-    reg.register("debug", cmd_debug, aliases=["f3"])

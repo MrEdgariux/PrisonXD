@@ -1,16 +1,25 @@
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Any
+from configparser import ConfigParser
+
+from classes.player.main import Player
+from classes.shop import ShopManager
+
+from ui.notifications import NotificationManager
+from ui.chat import ChatUI
+from ui.shop import ShopUI
+
+from rooms.scene_manager import SceneManager
 
 @dataclass
 class CommandContext:
-    player: Any
-    scene_mgr: Any
-    notifier: Any
-    chat: Any
-    shop_ui: Any = None
-    shop_mgr: Any = None
-    config: Any = None
-    debug: Any = None
+    player: Player
+    scene_mgr: SceneManager
+    notifier: NotificationManager
+    chat: ChatUI
+    shop_ui: ShopUI = None
+    shop_mgr: ShopManager = None
+    config: ConfigParser = None
 
 class CommandRegistry:
     def __init__(self):
@@ -57,8 +66,8 @@ class CommandRegistry:
             out.append(buf)
         return out
 
-    def _feedback(self, ctx: CommandContext, msg: str, level="info"):
-        if ctx.notifier:
+    def _feedback(self, ctx: CommandContext, msg: str, level="info", use=0):
+        if ctx.notifier and use == 1:
             ctx.notifier.push(msg, level=level)
-        if ctx.chat:
+        if ctx.chat and use == 0:
             ctx.chat.add_message("System", msg)

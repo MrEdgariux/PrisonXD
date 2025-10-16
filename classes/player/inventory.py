@@ -17,6 +17,12 @@ class PlayerSlot():
     
     def add_item(self, item: Item):
         if self.is_empty():
+            # Make sure we don't exceed slot size
+            if item.quantity > self.slot_size:
+                item.quantity -= self.slot_size
+                item_to_add = Item(item.material, self.slot_size, item.metadata)
+                self.item = item_to_add
+                return False, item
             self.item = item
             return True, item
         elif self.item.material.id == item.material.id:
@@ -43,6 +49,9 @@ class PlayerSlot():
                 item.quantity -= removed_quantity
                 return False, item
         return False, item
+    
+    def get_item(self):
+        return self.item if self.item else None
 
 class PlayerInventory:
     def __init__(self, slot_count: int = 10, slot_size: int = 64):

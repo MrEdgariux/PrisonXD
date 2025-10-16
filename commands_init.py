@@ -32,8 +32,12 @@ def cmd_give(ctx: CommandContext, args: List[str]):
     qty = int(args[1])
     # Your factory:
     from classes.items.item import Item
-    from classes.items.materials import MATERIALS
-    mat = MATERIALS.get(item_id) or MATERIALS.get(item_id.upper())
+    from classes.items.materials import Materials
+    mat = None
+    for material in Materials:
+        if material.name.upper() == item_id.upper() or material.id.upper() == item_id.upper():
+            mat = material
+            break
     if not mat:
         raise ValueError(f"Unknown item '{item_id}'")
     item = Item(mat, qty)
@@ -63,13 +67,4 @@ def cmd_shop(ctx: CommandContext, args: List[str]):
         ctx.notifier.push("Shop opened", level="info")
     else:
         ctx.notifier.push("No shop here.", level="warning")
-
-def cmd_inv(ctx: CommandContext, args: List[str]):
-    ctx.player.toggle_inventory()
-    ctx.notifier.push("Toggled inventory", level="info")
-
-def cmd_debug(ctx: CommandContext, args: List[str]):
-    if ctx.debug:
-        ctx.debug.toggle()
-        ctx.notifier.push("Toggled debug overlay", level="info")
 

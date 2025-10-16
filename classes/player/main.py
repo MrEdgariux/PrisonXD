@@ -6,7 +6,8 @@ import time, pygame
 
 class Player:
     def __init__(self, res, config: ConfigParser, settings: ConfigParser, rank_manager: RankManager):
-        self.inventory = PlayerInventory(config.getint('game.inventory', 'slot_count', fallback=10), config.getint('game.inventory', 'slot_size', fallback=64))
+        self.slots = config.getint('game.inventory', 'slot_columns', fallback=9) * config.getint('game.inventory', 'slot_rows', fallback=4)
+        self.inventory = PlayerInventory(self.slots, config.getint('game.inventory', 'slot_size', fallback=64))
         self.position = (100, 100)
         self.res = res
         self.settings = settings
@@ -67,17 +68,117 @@ class Player:
 
     def _build_inventory_surface(self):
         import pygame
-        inv_container = pygame.Surface((400, 300))
-        inv_container.fill((50, 50, 50))
-        font = pygame.font.Font(None, 36)
-        y_offset = 10
-        itemai = self.inventory.get_items()
-        for item in itemai:
-            item_text = f"{item.material.name} x{item.quantity}"
-            text_surf = font.render(item_text, True, (255, 255, 255))
-            inv_container.blit(text_surf, (10, y_offset))
-            y_offset += 40
-        return inv_container
+        # --- layout constants ---
+        ROWS, COLS = self.config.getint('game.inventory', 'slot_rows', fallback=4), self.config.getint('game.inventory', 'slot_columns', fallback=9)
+        SLOT = 56                 # slot outer size (px)
+        GAP  = 6                  # gap between slots
+        PAD  = 12                 # padding inside container
+        LABEL_H = 28
+
+        w = PAD*2 + COLS*SLOT + (COLS-1)*GAP
+        h = PAD*3 + LABEL_H + ROWS*SLOT + (ROWS-1)*GAP
+
+        surf = pygame.Surface((w, h), pygame.SRCALPHA)
+        # panel background
+        pygame.draw.rect(surf, (35,35,35,235), surf.get_rect(), border_radius=12)
+
+        # title
+        font = pygame.font.Font(None, 28)
+        title = font.render("Inventory", True, (255,255,255))
+        surf.blit(title, (PAD, PAD))
+
+        # grid origin
+        grid_x = PAD
+        grid_y = PAD*2 + LABEL_H
+
+        # slot rects (ui-local) cached for hover
+        self._inv_slot_rects = []   # list of pygame.Rect
+        self._inv_slot_items = []   # parallel list of items (or None)
+
+        # draw slots
+        for r in range(ROWS):
+            for c in range(COLS):
+                idx = r*COLS + c
+                x = grid_x + c*(SLOT+GAP)
+                y = grid_y + r*(SLOT+GAP)
+                rect = pygame.Rect(x, y, SLOT, SLOT)
+
+                # slot background
+                pygame.draw.rect(surf, (50,50,50), rect, border_radius=8)
+                pygame.draw.rect(surf, (20,20,20), rect, width=2, border_radius=8)
+
+                item = self.inventory.slots[idx].get_item()
+                self._inv_slot_rects.append(rect)
+                self._inv_slot_items.append(item)
+
+                if item:
+                    # inner block rect
+                    inner = rect.inflate(-14, -14)
+                    # color from material
+                    color = getattr(item.material, "color", (200,200,200))
+                    pygame.draw.rect(surf, color, inner, border_radius=6)
+                    pygame.draw.rect(surf, (0,0,0), inner, width=2, border_radius=6)
+
+                    # quantity (bottom-right)
+                    q_font = pygame.font.Font(None, 24)
+                    qty_s = q_font.render(str(item.quantity), True, (255,255,255))
+                    surf.blit(qty_s, (rect.right - qty_s.get_width() - 6, rect.bottom - qty_s.get_height() - 4))
+
+        return surf
+    
+    def draw_inventory(self, screen, topleft=(440, 210)):
+        """
+        Call this each frame when inventory is open.
+        Renders the grid and shows a tooltip with item name on hover.
+        """
+        import pygame
+        # (Re)build the inventory surface & slot rects
+        inv_surface = self._build_inventory_surface()
+        inv_rect = inv_surface.get_rect(topleft=topleft)
+
+        # draw the container
+        screen.blit(inv_surface, inv_rect.topleft)
+
+        # hover detection: translate mouse to UI-local coords
+        mx, my = pygame.mouse.get_pos()
+        if not inv_rect.collidepoint((mx, my)):
+            return  # mouse not over inventory
+
+        local = (mx - inv_rect.left, my - inv_rect.top)
+
+        # find hovered slot
+        hovered_item = None
+        hovered_rect = None
+        for rect, item in zip(self._inv_slot_rects, self._inv_slot_items):
+            if rect.collidepoint(local) and item:
+                hovered_item = item
+                hovered_rect = rect
+                break
+
+        if hovered_item:
+            # build tooltip with item name
+            name = getattr(hovered_item.material, "name", "Unknown")
+            tip_font = pygame.font.Font(None, 24)
+            text = tip_font.render(name, True, (255,255,255))
+            pad = 6
+            tip_w = text.get_width() + pad*2
+            tip_h = text.get_height() + pad*2
+            tip = pygame.Surface((tip_w, tip_h), pygame.SRCALPHA)
+            pygame.draw.rect(tip, (0,0,0,200), tip.get_rect(), border_radius=6)
+            tip.blit(text, (pad, pad))
+
+            # place tooltip above the hovered slot (clamp to screen)
+            # slot rect in screen coords:
+            slot_screen = hovered_rect.move(inv_rect.left, inv_rect.top)
+            tx = slot_screen.centerx - tip_w//2
+            ty = slot_screen.top - tip_h - 8
+
+            # clamp
+            sw, sh = screen.get_size()
+            tx = max(4, min(tx, sw - tip_w - 4))
+            ty = max(4, ty)
+
+            screen.blit(tip, (tx, ty))
 
     def get_inventory_surface(self):
         return self._inventory_surface

@@ -19,6 +19,8 @@ from ui.debug import DebugOverlay
 from ui.shop import ShopUI
 from ui.chat import ChatUI
 
+from systems.mining import MiningSystem
+
 from init import GameInit
 
 from helper import *
@@ -45,6 +47,8 @@ settings.read('settings.ini')
 
 player = Player(screen.get_size(), config, settings, rank_manager)
 player.position = scene_mgr.current.spawn
+
+mining_system = MiningSystem(config, notifier)
 
 debug.add_static("PrisonXD v0.1")
 running = True
@@ -120,7 +124,6 @@ def make_ctx():
         shop_ui=shop_ui,
         shop_mgr=shop_manager,
         config=config,
-        debug=debug,
     )
 
 while running:
@@ -132,9 +135,10 @@ while running:
             if chat_message:
                 if chat_message.startswith("/"):
                     cmds.run(make_ctx(), chat_message[1:])
+                    print(f"Command executed: {chat_message}")
                 else:
                     chat.add_message("Player", chat_message, (255, 255, 255))
-                print(f"Chat message: {chat_message}")
+                    print(f"Chat message: {chat_message}")
             continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_F3:
             debug.toggle()
@@ -154,6 +158,12 @@ while running:
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_t:
             chat.toggle_chat()
 
+        # ---- Mining system handles LMB when allowed ----
+        mining_system.handle_event(
+            event, player, scene_mgr,
+            ignore_when=lambda: (player.inventory_open or shop_ui.visible or chat.is_chat_open)
+        )
+
     screen.fill((0, 155, 0))
 
     pygame.draw.rect(screen, (255, 0, 0), (player.position[0], player.position[1], 50, 50))
@@ -163,52 +173,16 @@ while running:
     if next_scene:
         scene_mgr.switch(next_scene, player, next_spawn)
 
-    if player.inventory_open:
-        scene_mgr.current.draw(screen, player)
-        inv_surf = player.get_inventory_surface()
-        if inv_surf:
-            screen.blit(inv_surf, (440, 210))
-
-        pygame.display.flip()
-        clock.tick(60)
-        continue  # Skip movement and mining when inventory is open
-
     keys = pygame.key.get_pressed()
     if not chat.is_chat_open:
         player.moveHandler(keys, scene_mgr.cubes())
 
-    mouse_pressed = pygame.mouse.get_pressed()[0]
-
-    if mouse_pressed and not is_mouse_down:
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-
-        mouse_x = math.floor(mouse_x / 50) * 50
-        mouse_y = math.floor(mouse_y / 50) * 50
-
-        player_coordinates = player.position
-        
-        # Get mining distance from config
-        distance_x = int(config.get('game.mines', 'distance_x', fallback=50))
-        distance_y = int(config.get('game.mines', 'distance_y', fallback=50))
-
-        for cube in scene_mgr.cubes().copy():
-            if cube.rect.collidepoint(mouse_x, mouse_y):
-                if not (player_coordinates[0] in range(cube.rect.x - distance_x, cube.rect.x + cube.rect.width + distance_x) and player_coordinates[1] in range(cube.rect.y - distance_y, cube.rect.y + cube.rect.height + distance_y)):
-                    notifier.push("Too far away to mine!", "warning")
-                    break
-
-                if cube.item.metadata.get("indestructable", False):
-                    notifier.push("Block is indestructable", "warning")
-                    break
-                print(f"Removing {cube.item.material.name} at: ({cube.rect.x}, {cube.rect.y})")
-                success, items = player.inventory.add_item(cube.get_drops())
-                scene_mgr.current.cubes.remove(cube)
-                break
-
-    is_mouse_down = mouse_pressed
-
     # draw scene
     scene_mgr.current.draw(screen, player)
+
+    if player.inventory_open:
+        player.draw_inventory(screen)
+
     notifier.draw(screen)
     debug.draw(screen)
     shop_ui.draw(screen)
