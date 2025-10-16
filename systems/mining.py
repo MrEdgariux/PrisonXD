@@ -2,6 +2,9 @@
 import pygame
 from typing import Optional
 
+from classes.player.main import Player
+from rooms.scene_manager import SceneManager
+
 class MiningSystem:
     def __init__(self, config, notifier):
         self.config = config
@@ -15,7 +18,7 @@ class MiningSystem:
         pass
 
     # Event-style mining (recommended): call from main event loop
-    def handle_event(self, event, player, scene_mgr, *, ignore_when=lambda: False):
+    def handle_event(self, event, player: Player, scene_mgr: SceneManager, *, ignore_when=lambda: False):
         if ignore_when() or not scene_mgr.current:
             return False
 
@@ -30,7 +33,7 @@ class MiningSystem:
 
     # ---- internals ----
 
-    def _try_mine_now(self, player, scene_mgr) -> bool:
+    def _try_mine_now(self, player: Player, scene_mgr: SceneManager) -> bool:
         # cooldown
         now = pygame.time.get_ticks()
         if now - self._last_mine_time < self._cooldown_ms:
@@ -85,6 +88,7 @@ class MiningSystem:
                         name = drops.material.name
                         qty  = drops.quantity
                     self.notifier.push(f"Picked up {name} x{qty}", "success")
+                    player.stats.blocks_mined += qty
                 except Exception:
                     pass
 

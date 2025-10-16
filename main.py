@@ -12,7 +12,7 @@ from classes.player.ranks import RankManager, Rank
 from classes.chat.commands.command_handler import CommandRegistry, CommandContext
 
 from rooms.scene_manager import SceneManager
-from rooms.scenes import ShopScene
+from rooms.C.scenes import ShopScene
 
 from ui.notifications import NotificationManager
 from ui.debug import DebugOverlay
@@ -50,7 +50,7 @@ player.position = scene_mgr.current.spawn
 
 mining_system = MiningSystem(config, notifier)
 
-debug.add_static("PrisonXD v0.1")
+debug.add_static("PrisonXD v0.2")
 running = True
 is_mouse_down = False
 

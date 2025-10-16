@@ -23,11 +23,15 @@ class HubScene(SceneBase):
             item = Item(DIRT, 1, {"indestructable": True, "decoration": True})
             self.cubes.append(Block(x, 650, cube_size, cube_size, item))  # ground
 
+        screen = pygame.display.get_window_size()
+
         corridor_left = pygame.display.get_window_size()[0] - portal_width
 
         portal_mine_rect = pygame.Rect(corridor_left, 0, portal_width, portal_height)
         portal_shop_rect = pygame.Rect(0, 0, portal_width, portal_height)
-        self.portals = [(portal_mine_rect, "c_mine", (50, 300)), (portal_shop_rect, "c_shop", (1100, 335))]
+        portal_hub_rect = pygame.Rect(50, 0, screen[0]-100, portal_width)
+        
+        self.portals = [(portal_mine_rect, "c_mine", (50, 300)), (portal_shop_rect, "c_shop", (1100, 335)), (portal_hub_rect, "hub", (100, 335))]
 
 class MineScene(SceneBase):
     def __init__(self):

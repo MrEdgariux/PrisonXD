@@ -1,23 +1,32 @@
 from classes.player.inventory import PlayerInventory
+from classes.player.stats import Stats
 from classes.player.ranks import RankManager, Rank
 from pygame.locals import K_LEFT, K_RIGHT, K_UP, K_DOWN, K_a, K_d, K_w, K_s
 from configparser import ConfigParser
-import time, pygame
 
 class Player:
     def __init__(self, res, config: ConfigParser, settings: ConfigParser, rank_manager: RankManager):
-        self.slots = config.getint('game.inventory', 'slot_columns', fallback=9) * config.getint('game.inventory', 'slot_rows', fallback=4)
-        self.inventory = PlayerInventory(self.slots, config.getint('game.inventory', 'slot_size', fallback=64))
+
+        self.rank_manager = rank_manager
+        self.rank: Rank = rank_manager.get(config.get('game.player', 'default_rank', fallback="c"))
+
+        self.config = config
+        self.settings = settings
+
+        self.slots = config.getint('game.player.inventory', 'slot_columns', fallback=9) * config.getint('game.player.inventory', 'slot_rows', fallback=4)
+        self.inventory = PlayerInventory(self.slots, config.getint('game.player.inventory', 'slot_size', fallback=64))
+
         self.position = (100, 100)
         self.res = res
-        self.settings = settings
-        self.config = config
+
         self.inventory_open = False
-        self._inventory_surface = None  # cached surface
+        self._inventory_surface = None
 
         self.money = 0
         self.gems = 0
-        self.rank: Rank = rank_manager.get("c") # Default rank
+
+        self.stats = Stats()
+
 
     def moveHandler(self, keys, obstacles=None):
         if keys[K_LEFT] or keys[K_a]:
@@ -69,7 +78,7 @@ class Player:
     def _build_inventory_surface(self):
         import pygame
         # --- layout constants ---
-        ROWS, COLS = self.config.getint('game.inventory', 'slot_rows', fallback=4), self.config.getint('game.inventory', 'slot_columns', fallback=9)
+        ROWS, COLS = self.config.getint('game.player.inventory', 'slot_rows', fallback=4), self.config.getint('game.player.inventory', 'slot_columns', fallback=9)
         SLOT = 56                 # slot outer size (px)
         GAP  = 6                  # gap between slots
         PAD  = 12                 # padding inside container
@@ -180,8 +189,13 @@ class Player:
 
             screen.blit(tip, (tx, ty))
 
-    def get_inventory_surface(self):
-        return self._inventory_surface
+    def rankup(self):
+        next_rank = self.rank_manager.next(self.rank.id)
+        if next_rank and self.money >= next_rank.price:
+            self.money -= next_rank.price
+            self.rank = next_rank
+            return True, next_rank
+        return False, None
     
     def add_money(self, amount):
         self.money += amount
