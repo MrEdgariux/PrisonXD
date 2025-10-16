@@ -13,6 +13,7 @@ class ChatUI:
         # Chat history
         self.messages = []
         self.max_messages = 50
+        self.scroll_offset = 0
         
         # Input box
         self.input_text = ""
@@ -32,7 +33,23 @@ class ChatUI:
         self.padding = 10
         self.input_height = 30
         self.message_height = 20
-        
+
+    def _message_area_rect(self):
+        return pygame.Rect(
+            self.rect.x + self.padding,
+            self.rect.y + self.padding,
+            self.rect.width - 2 * self.padding,
+            self.rect.height - self.input_height - 3 * self.padding
+        )
+
+    def _input_rect(self):
+        return pygame.Rect(
+            self.rect.x + self.padding,
+            self.rect.bottom - self.input_height - self.padding,
+            self.rect.width - 2 * self.padding,
+            self.input_height
+        )
+    
     def toggle_chat(self):
         """Toggle chat open/closed"""
         self.is_chat_open = not self.is_chat_open
@@ -40,10 +57,18 @@ class ChatUI:
             self.input_active = False
             self.input_text = ""
             self.cursor_pos = 0
+        else:
+            self.input_active = True
+            self.cursor_timer = 0
+        self.scroll_offset = 0  # <— reset
     
     def open_chat(self):
         """Open the chat"""
         self.is_chat_open = True
+        self.input_active = True
+        self.input_text = ""
+        self.cursor_pos = 0
+        self.scroll_offset = 0  # <— reset
         
     def close_chat(self):
         """Close the chat"""
@@ -51,6 +76,7 @@ class ChatUI:
         self.input_active = False
         self.input_text = ""
         self.cursor_pos = 0
+        self.scroll_offset = 0  # <— reset
         
     def add_message(self, username, message, color=(255, 255, 255)):
         """Add a message to the chat"""
@@ -111,16 +137,26 @@ class ChatUI:
                     if len(event.unicode) > 0 and event.unicode.isprintable():
                         self.input_text = self.input_text[:self.cursor_pos] + event.unicode + self.input_text[self.cursor_pos:]
                         self.cursor_pos += 1
-        
-        elif event.type == pygame.MOUSEBUTTONDOWN and self.is_chat_open:
+
+        elif event.type == pygame.MOUSEWHEEL and self.is_chat_open:
+            # Only scroll if mouse is over the chat's message area
+            if self._message_area_rect().collidepoint(pygame.mouse.get_pos()):
+                # Compute how many messages fit
+                message_area_height = self.rect.height - self.input_height - 3 * self.padding
+                visible = max(1, int(message_area_height // self.message_height))
+                max_offset = max(0, len(self.messages) - visible)
+
+                # Pygame: event.y > 0 means scroll up → older messages → increase offset
+                self.scroll_offset = max(0, min(max_offset, self.scroll_offset - event.y))
+
+                                
+        elif event.type == pygame.MOUSEBUTTONDOWN and self.is_chat_open and event.button == 1:
             # Check if clicked on input box
-            input_rect = pygame.Rect(
-                self.rect.x + self.padding,
-                self.rect.bottom - self.input_height - self.padding,
-                self.rect.width - 2 * self.padding,
-                self.input_height
-            )
+            input_rect = self._input_rect()
+            message_rect = self._message_area_rect()
             self.input_active = input_rect.collidepoint(event.pos)
+            if not self.input_active and not message_rect.collidepoint(event.pos):
+                self.close_chat()
         
         return None
     
@@ -147,12 +183,17 @@ class ChatUI:
         
         # Draw messages
         message_area_height = self.rect.height - self.input_height - 3 * self.padding
+        visible_messages = max(1, int(message_area_height // self.message_height))
+
+        # Clamp scroll (in case size changed)
+        max_offset = max(0, len(self.messages) - visible_messages)
+        self.scroll_offset = max(0, min(self.scroll_offset, max_offset))
+
+        # Start from the bottom minus scroll_offset
+        start_index = max(0, len(self.messages) - visible_messages - self.scroll_offset)
+
         start_y = self.padding
-        
-        # Calculate how many messages can fit
-        visible_messages = int(message_area_height // self.message_height)
-        start_index = max(0, len(self.messages) - visible_messages)
-        
+                
         for i, msg in enumerate(self.messages[start_index:]):
             y_pos = start_y + i * self.message_height
             

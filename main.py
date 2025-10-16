@@ -9,6 +9,7 @@ from classes.items.materials import Materials
 from classes.items.item import Item
 from classes.shop import ShopManager
 from classes.player.ranks import RankManager, Rank
+from classes.chat.commands.command_handler import CommandRegistry, CommandContext
 
 from rooms.scene_manager import SceneManager
 from rooms.scenes import ShopScene
@@ -29,10 +30,11 @@ clock = pygame.time.Clock()
 notifier = NotificationManager(anchor="top-center")  # or "bottom-left"
 debug = DebugOverlay(anchor="top-left", font=pygame.font.Font(None, 18))
 chat = ChatUI(10, 400, 400, 290)
+cmds = CommandRegistry()
 shop_manager = ShopManager()
 shop_ui = ShopUI()
 rank_manager = RankManager()
-GameInit(shop_manager, rank_manager)
+GameInit(shop_manager, rank_manager, cmds)
 scene_mgr = SceneManager(shop_manager, shop_ui)
 
 config = configparser.ConfigParser()
@@ -107,6 +109,20 @@ debug.add_provider(mouse_hover_provider)
 debug.add_provider(rank_provider)
 debug.add_provider(ranks_provider)
 
+# -- HELPER FUNCTIONS --
+
+def make_ctx():
+    return CommandContext(
+        player=player,
+        scene_mgr=scene_mgr,
+        notifier=notifier,
+        chat=chat,
+        shop_ui=shop_ui,
+        shop_mgr=shop_manager,
+        config=config,
+        debug=debug,
+    )
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE and not chat.is_chat_open):
@@ -114,7 +130,10 @@ while running:
         if chat.is_chat_open:
             chat_message = chat.handle_event(event)
             if chat_message:
-                chat.add_message("Player", chat_message, (255, 255, 255))
+                if chat_message.startswith("/"):
+                    cmds.run(make_ctx(), chat_message[1:])
+                else:
+                    chat.add_message("Player", chat_message, (255, 255, 255))
                 print(f"Chat message: {chat_message}")
             continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_F3:

@@ -1,0 +1,62 @@
+# Main game
+ You start at the HUB with 0 $. You go to MINE to MINE for resources. You can go to SHOP to SELL resources
+
+# Keybinds
+    - W, A, S, D to move
+    - LEFT MOUSE CLICK to mine/interact
+    - E to open inventory
+    - F3 to open debug menu
+    - ESC to exit this shitty game
+
+# Resources
+ There is 4 types of resources you can find in the mine:
+    - STONE
+    - IRON
+    - GOLD
+    - DIAMOND
+ Each resource has its own value:
+    - STONE: 1 $
+    - IRON: 3 $
+    - GOLD: 10 $
+    - DIAMOND: 50 $
+
+# Ranks
+ We have some of the ranks (IN BETA OFC)
+    - C (Default):
+     You start your journey here. To rankup see CHAT / COMMANDS section.
+    - B (100 $):
+     You can now mine IRON idiot.
+    - A (300 $):
+     You can now mine GOLD you rich bastard.
+    - Elitas (1000 $):
+     You can now mine DIAMOND you lucky bastard.
+    - Owner (10000 $):
+     You can take this shitty game and sell to bankrupt.
+     You can now mine EVERYTHING you greedy bastard.
+
+# CHAT
+    - COMMANDS:
+        - DEFAULT FOR ALL PLAYERS -
+            /rankup - Rankup if you have enough money
+            /help - Show this message
+
+        - PRIVILEGED COMMANDS (VIP and higher) -
+            /sellall - Sell all your resources
+            /sell [resource] [amount] - Sell a specific amount of a resource
+            /shop [shop-id] - Open the shop anywhere
+
+        - ADMIN COMMANDS -
+            /reset - Reset your stats and money (for testing purposes)
+            /give [resource] [amount] - Give yourself resources (for testing purposes)
+            /setmoney [amount] - Set your money (for testing purposes)
+            /setrank [rank] - Set your rank (for testing purposes)
+            /fly - Toggle fly mode (for testing purposes)
+            /god - Toggle god mode (for testing purposes)
+            /heal - Heal yourself (for testing purposes)
+
+# SHOP
+    There are 1 shop at this point:
+    - SHOP ID: 1 (C SHOP)
+     You can SELL resources here.
+     Prices are the same as mentioned in RESOURCES section.
+     If you gonna sell smth not what needs to be sold you are getting banned (which is impossible bcs its offline game).

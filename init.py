@@ -1,10 +1,13 @@
 from classes.shop import Shop, ShopItem, ShopManager
-from typing import List
 
 from classes.items.materials import *
 from classes.player.ranks import Rank, RankManager
+from classes.chat.commands.command_handler import CommandRegistry, CommandContext
 
-def GameInit(shop_manager: ShopManager, rank_manager: RankManager):
+from commands_init import *
+
+def GameInit(shop_manager: ShopManager, rank_manager: RankManager, reg: CommandRegistry):
+    
     ShopItems = [
         ShopItem(DIRT, buy_price=0, sell_price=1, max_stock=-1),
         ShopItem(STONE, buy_price=0, sell_price=1, max_stock=-1),
@@ -28,3 +31,13 @@ def GameInit(shop_manager: ShopManager, rank_manager: RankManager):
 
     shop = Shop("mine_sell_shop", "Sell Items", ShopItems)
     shop_manager.register(shop)
+
+    reg.register("help",  cmd_help)
+    reg.register("say",   cmd_say)
+    reg.register("money", cmd_money)
+    reg.register("give",  cmd_give, aliases=["item"])
+    reg.register("tp",    cmd_tp,   aliases=["teleport"])
+    reg.register("scene", cmd_scene)
+    reg.register("shop",  cmd_shop)
+    reg.register("inv",   cmd_inv,  aliases=["inventory"])
+    reg.register("debug", cmd_debug, aliases=["f3"])
