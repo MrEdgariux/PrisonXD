@@ -26,6 +26,7 @@ from init import GameInit
 from helper import *
 
 pygame.init()
+
 screen = pygame.display.set_mode((1300, 700))
 clock = pygame.time.Clock()
 

@@ -10,7 +10,7 @@ from rooms.scenes import SceneBase
 class HubScene(SceneBase):
     def __init__(self):
         # spawn in middle-left, e.g.
-        super().__init__("c_hub", spawn=(100, 335))
+        super().__init__("c_hub", spawn=(110, 335))
 
     def load(self):
         self.cubes = []
@@ -21,7 +21,7 @@ class HubScene(SceneBase):
 
         for x in range(0, 1300, 50):
             item = Item(DIRT, 1, {"indestructable": True, "decoration": True})
-            self.cubes.append(Block(x, 650, cube_size, cube_size, item))  # ground
+            self.cubes.append(Block(x, 650, cube_size, cube_size, item))
 
         screen = pygame.display.get_window_size()
 
