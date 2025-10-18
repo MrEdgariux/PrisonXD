@@ -56,9 +56,10 @@ class MiningSystem:
             if cube.rect.collidepoint(gx, gy):
                 px, py = player.position
                 in_reach = (
-                    px in range(cube.rect.left - reach_x, cube.rect.right + reach_x + 1) and
-                    py in range(cube.rect.top  - reach_y, cube.rect.bottom + reach_y + 1)
+                    int(px) in range(cube.rect.left - reach_x, cube.rect.right + reach_x + 1) and
+                    int(py) in range(cube.rect.top  - reach_y, cube.rect.bottom + reach_y + 1)
                 )
+                print(f"Mining attempt at ({gx}, {gy}), player at ({px}, {py}), in_reach={in_reach}")
                 if not in_reach:
                     self.notifier.push("Too far away to mine!", "warning")
                     return True

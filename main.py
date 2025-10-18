@@ -176,7 +176,7 @@ while running:
         screen.blit(player_img, player.position)
     except FileNotFoundError:
         # Fallback to red rectangle if image not found
-        pygame.draw.rect(screen, (255, 0, 0), (player.position[0], player.position[1], 50, 50))
+        pygame.draw.rect(screen, (255, 0, 0), (int(player.position[0]), int(player.position[1]), 50, 50))
 
     # SCENE UPDATE: check portals and switch if needed
     next_scene, next_spawn = scene_mgr.current.update(player)

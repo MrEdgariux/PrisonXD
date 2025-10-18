@@ -45,7 +45,7 @@ class Player:
 
     def move(self, dx, dy, obstacles=None):
         x, y = self.position
-        new_position = (x + dx, y + dy)
+        new_position = (round(x + dx, 3), round(y + dy, 3))
         
         # Check collision with obstacles
         if obstacles:
