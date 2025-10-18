@@ -142,7 +142,7 @@ class ChatUI:
             # Only scroll if mouse is over the chat's message area
             if self._message_area_rect().collidepoint(pygame.mouse.get_pos()):
                 # Compute how many messages fit
-                message_area_height = self.rect.height - self.input_height - 3 * self.padding
+                message_area_height = self.rect.height - self.input_height - 5 * self.padding
                 visible = max(1, int(message_area_height // self.message_height))
                 max_offset = max(0, len(self.messages) - visible)
 
@@ -183,28 +183,74 @@ class ChatUI:
         
         # Draw messages
         message_area_height = self.rect.height - self.input_height - 3 * self.padding
-        visible_messages = max(1, int(message_area_height // self.message_height))
+        available_width = self.rect.width - 2 * self.padding
+        
+        # Calculate how many lines all messages will take
+        total_lines = 0
+        message_lines = []
+        
+        for msg in self.messages:
+            # Calculate username width
+            username_text = f"{msg['username']}: "
+            username_width = self.small_font.size(username_text)[0]
+            message_width = available_width - username_width
+            
+            # Wrap message text
+            words = msg['message'].split(' ')
+            lines = []
+            current_line = ""
+            
+            for word in words:
+                test_line = current_line + (" " if current_line else "") + word
+                if self.small_font.size(test_line)[0] <= message_width:
+                    current_line = test_line
+                else:
+                    if current_line:
+                        lines.append(current_line)
+                        current_line = word
+                    else:
+                        # Word is too long, break it
+                        lines.append(word)
+            
+            if current_line:
+                lines.append(current_line)
+            
+            message_lines.append({
+                'username': msg['username'],
+                'lines': lines,
+                'color': msg['color'],
+                'username_width': username_width
+            })
+            total_lines += len(lines)
 
-        # Clamp scroll (in case size changed)
-        max_offset = max(0, len(self.messages) - visible_messages)
+        # Calculate visible lines and scrolling
+        visible_lines = max(1, int(message_area_height // self.message_height))
+        max_offset = max(0, total_lines - visible_lines)
         self.scroll_offset = max(0, min(self.scroll_offset, max_offset))
 
-        # Start from the bottom minus scroll_offset
-        start_index = max(0, len(self.messages) - visible_messages - self.scroll_offset)
-
+        # Draw messages
+        current_line = 0
         start_y = self.padding
+        
+        for msg_data in message_lines:
+            for i, line in enumerate(msg_data['lines']):
+                # Check if this line should be visible
+                if current_line >= self.scroll_offset and current_line < self.scroll_offset + visible_lines:
+                    y_pos = start_y + (current_line - self.scroll_offset) * self.message_height
+                    
+                    if i == 0:  # First line shows username
+                        # Draw username
+                        username_surface = self.small_font.render(f"{msg_data['username']}: ", True, msg_data['color'])
+                        chat_surface.blit(username_surface, (self.padding, y_pos))
+                        
+                        # Draw message line
+                        message_surface = self.small_font.render(line, True, self.text_color)
+                        chat_surface.blit(message_surface, (self.padding + msg_data['username_width'], y_pos))
+                    else:  # Continuation lines are indented
+                        message_surface = self.small_font.render(line, True, self.text_color)
+                        chat_surface.blit(message_surface, (self.padding + msg_data['username_width'], y_pos))
                 
-        for i, msg in enumerate(self.messages[start_index:]):
-            y_pos = start_y + i * self.message_height
-            
-            # Draw username
-            username_surface = self.small_font.render(f"{msg['username']}: ", True, msg['color'])
-            chat_surface.blit(username_surface, (self.padding, y_pos))
-            
-            # Draw message
-            username_width = username_surface.get_width()
-            message_surface = self.small_font.render(msg['message'], True, self.text_color)
-            chat_surface.blit(message_surface, (self.padding + username_width, y_pos))
+                current_line += 1
         
         # Draw input box
         input_rect = pygame.Rect(

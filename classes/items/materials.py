@@ -8,6 +8,11 @@ DIRT = Material("dirt", "Dirt", (139, 69, 19))  # Brown
 GRASS = Material("grass", "Grass", (34, 139, 34))  # Green
 STONE = Material("stone", "Stone", (128, 128, 128))  # Gray
 WOOD = Material("wood", "Wood", (160, 82, 45))  # Sienna
+
+RAW_IRON = Material("raw_iron", "Raw Iron", (184, 134, 11))  # Dark Goldenrod
+RAW_GOLD = Material("raw_gold", "Raw Gold", (218, 165, 32))  # Goldenrod
+RAW_DIAMOND = Material("raw_diamond", "Raw Diamond", (72, 209, 204))  # Medium Turquoise
+
 IRON = Material("iron", "Iron", (192, 192, 192))  # Silver
 GOLD = Material("gold", "Gold", (255, 215, 0))  # Gold
 DIAMOND = Material("diamond", "Diamond", (0, 255, 255))  # Cyan

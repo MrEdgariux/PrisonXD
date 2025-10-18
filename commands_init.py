@@ -16,7 +16,7 @@ def cmd_help(ctx: CommandContext, args: List[str]):
         "/debug                - toggle F3 overlay",
     ]
     for ln in lines:
-        ctx.chat.add_message("Help", ln)
+        ctx.chat.add_message("System", ln)
 
 def cmd_say(ctx: CommandContext, args: List[str]):
     ctx.chat.add_message("You", " ".join(args) if args else "")
@@ -56,10 +56,19 @@ def cmd_tp(ctx: CommandContext, args: List[str]):
 
 def cmd_scene(ctx: CommandContext, args: List[str]):
     if not args:
-        raise ValueError("Usage: /scene <hub|mine|shop>")
+        raise ValueError("Usage: /scene <name>")
     name = args[0]
-    ctx.scene_mgr.set(name, ctx.player)
-    ctx.notifier.push(f"Switched scene to {name}", level="success")
+    try:
+        ctx.scene_mgr.switch(name, ctx.player)
+        ctx.notifier.push(f"Switched scene to {name}", level="success")
+    except ValueError as e:
+        ctx.notifier.push(str(e), level="error")
+
+def cmd_scenes(ctx: CommandContext, args: List[str]):
+    lines = [f"Available scenes: {', '.join(ctx.scene_mgr.scenes.keys())}"
+    ]
+    for ln in lines:
+        ctx.chat.add_message("System", ln)
 
 def cmd_shop(ctx: CommandContext, args: List[str]):
     if ctx.shop_ui and ctx.scene_mgr.current and getattr(ctx.scene_mgr.current, "shop", None):

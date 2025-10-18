@@ -4,6 +4,8 @@ from classes.player.ranks import RankManager, Rank
 from pygame.locals import K_LEFT, K_RIGHT, K_UP, K_DOWN, K_a, K_d, K_w, K_s
 from configparser import ConfigParser
 
+import math
+
 class Player:
     def __init__(self, res, config: ConfigParser, settings: ConfigParser, rank_manager: RankManager):
 
@@ -12,6 +14,8 @@ class Player:
 
         self.config = config
         self.settings = settings
+
+        self.walk_speed = config.getint('game.player', 'walk_speed', fallback=1) * 250
 
         self.slots = config.getint('game.player.inventory', 'slot_columns', fallback=9) * config.getint('game.player.inventory', 'slot_rows', fallback=4)
         self.inventory = PlayerInventory(self.slots, config.getint('game.player.inventory', 'slot_size', fallback=64))
@@ -28,15 +32,16 @@ class Player:
         self.stats = Stats()
 
 
-    def moveHandler(self, keys, obstacles=None):
-        if keys[K_LEFT] or keys[K_a]:
-            self.move(-5, 0, obstacles)
-        if keys[K_RIGHT] or keys[K_d]:
-            self.move(5, 0, obstacles)
-        if keys[K_UP] or keys[K_w]:
-            self.move(0, -5, obstacles)
-        if keys[K_DOWN] or keys[K_s]:
-            self.move(0, 5, obstacles)
+    def moveHandler(self, keys, dt, obstacles=None):
+        vx = float((keys[K_d] or keys[K_RIGHT]) - (keys[K_a] or keys[K_LEFT]))
+        vy = float((keys[K_s] or keys[K_DOWN]) - (keys[K_w] or keys[K_UP]))
+
+        # normalize to avoid faster diagonals
+        length = math.hypot(vx, vy)
+        if length > 0:
+            vx /= length
+            vy /= length
+            self.move(vx * self.walk_speed * dt, vy * self.walk_speed * dt, obstacles)
 
     def move(self, dx, dy, obstacles=None):
         x, y = self.position

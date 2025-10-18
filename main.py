@@ -128,6 +128,9 @@ def make_ctx():
     )
 
 while running:
+    dt = clock.tick(0) / 1000.0 
+    dt = min(dt, 0.05)
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE and not chat.is_chat_open):
             running = False
@@ -164,10 +167,16 @@ while running:
             event, player, scene_mgr,
             ignore_when=lambda: (player.inventory_open or shop_ui.visible or chat.is_chat_open)
         )
+    screen.fill((75, 75, 75))
 
-    screen.fill((0, 155, 0))
-
-    pygame.draw.rect(screen, (255, 0, 0), (player.position[0], player.position[1], 50, 50))
+    # Load and draw player image
+    try:
+        player_img = pygame.image.load("assets/images/player.png").convert_alpha()
+        player_img = pygame.transform.scale(player_img, (50, 50))
+        screen.blit(player_img, player.position)
+    except FileNotFoundError:
+        # Fallback to red rectangle if image not found
+        pygame.draw.rect(screen, (255, 0, 0), (player.position[0], player.position[1], 50, 50))
 
     # SCENE UPDATE: check portals and switch if needed
     next_scene, next_spawn = scene_mgr.current.update(player)
@@ -176,7 +185,7 @@ while running:
 
     keys = pygame.key.get_pressed()
     if not chat.is_chat_open:
-        player.moveHandler(keys, scene_mgr.cubes())
+        player.moveHandler(keys, dt, scene_mgr.cubes())
 
     # draw scene
     scene_mgr.current.draw(screen, player)
@@ -191,7 +200,5 @@ while running:
     chat.draw(screen)
 
     pygame.display.flip()
-
-    clock.tick(60)
 
 pygame.quit()

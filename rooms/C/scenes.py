@@ -49,17 +49,13 @@ class MineScene(SceneBase):
             item = Item(BEDROCK, 1, {"indestructable": True, "decoration": True})
             self.cubes.append(Block(x, 650, cube_size, cube_size, item))
             self.cubes.append(Block(x, 0, cube_size, cube_size, item))
-            
-        for y in range(0, 700, cube_size):
-            item = Item(BEDROCK, 1, {"indestructable": True, "decoration": True})
-            self.cubes.append(Block(1250, y, cube_size, cube_size, item))
 
         # Minable block cubes
         for x in range(cube_size + cube_size, 1300 - cube_size * 2, cube_size):
             for y in range(cube_size * 2, 600, cube_size):
                 mat = random.choices(
-                    population=[STONE, IRON, GOLD, DIAMOND],
-                    weights=[10, 3, 1, 0.5],
+                    population=[STONE, RAW_IRON, RAW_GOLD, RAW_DIAMOND],
+                    weights=[10, 0.5, 0.2, 0.1],
                     k=1
                 )[0]
                 item = Item(mat, 1)
@@ -67,7 +63,8 @@ class MineScene(SceneBase):
 
         # portal back to hub at the far left
         back_rect = pygame.Rect(0, 0, portal_width, portal_height)
-        self.portals = [(back_rect, "c_hub", (1100, 335))]
+        furnace_rect = pygame.Rect(1300 - portal_width, 0, portal_width, portal_height)
+        self.portals = [(back_rect, "c_hub", (1100, 335)), (furnace_rect, "furnace_room", (200, 335))]
 
 class ShopScene(SceneBase):
     def __init__(self, shop_manager: ShopManager, shop_ui: ShopUI):
