@@ -4,6 +4,7 @@ from typing import Optional
 
 from classes.player.main import Player
 from rooms.scene_manager import SceneManager
+from mine import Block
 
 class MiningSystem:
     def __init__(self, config, notifier):

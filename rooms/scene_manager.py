@@ -1,6 +1,8 @@
 from rooms.scenes import HubScene, FurnaceScene
 from rooms.C.scenes import HubScene as CHubScene, MineScene as CMineScene, ShopScene as CShopScene
 
+from mine import Block
+
 class SceneManager:
     def __init__(self, shop_manager, shop_ui):
         self.scenes = {
@@ -22,5 +24,5 @@ class SceneManager:
         # place player at the new spawn
         player.position = spawn if spawn else self.current.spawn
 
-    def cubes(self):
+    def cubes(self) -> list[Block]:
         return self.current.cubes
